@@ -1,4 +1,6 @@
 var request = require("request");
+var isArray = require('yow/isArray');
+
 var Service, Characteristic;
 
 module.exports = function(homebridge) {
@@ -8,38 +10,42 @@ module.exports = function(homebridge) {
   homebridge.registerAccessory("homebridge-plugin-uk-nationalgrid-carbonintensity", "National Grid Carbon Intensity", NGCarbonIntensity);
 }
 
-function LockitronAccessory(log, config) {
+function NGCarbonIntensity(log, config) {
   this.log = log;
-  this.name = config["name"];
-  this.accessToken = config["api_token"];
-  this.lockID = config["lock_id"];
+  this.config = config;
+  this.name = "National Grid Carbon Intensity";
   
-  this.service = new Service.LockMechanism(this.name);
-  
-  this.service
-    .getCharacteristic(Characteristic.LockCurrentState)
-    .on('get', this.getState.bind(this));
+  this.service = new Service.CarbonDioxideSensor(this.name);
   
   this.service
-    .getCharacteristic(Characteristic.LockTargetState)
-    .on('get', this.getState.bind(this))
-    .on('set', this.setState.bind(this));
+    .getCharacteristic(Characteristic.CarbonDioxideLevel)
+    .on('get', this.executeCo2.bind(this));
 }
 
-LockitronAccessory.prototype.getState = function(callback) {
+NGCarbonIntensity.prototype.executeCo2 = function(callback) {
   this.log("Getting current state...");
   
   request.get({
-    url: "https://api.lockitron.com/v2/locks/"+this.lockID,
-    qs: { access_token: this.accessToken }
+    url: "https://api.carbonintensity.org.uk/intensity",
+    headers: {
+      'Accept': 'application/json'
+    }
   }, function(err, response, body) {
     
     if (!err && response.statusCode == 200) {
       var json = JSON.parse(body);
-      var state = json.state; // "lock" or "unlock"
-      this.log("Lock state is %s", state);
-      var locked = state == "lock"
-      callback(null, locked); // success
+      var data = json.data;
+      this.log("National Grid Data: %s", JSON.stringify(data));
+      var actual = data[0].intensity.actual;
+      var forecast = data[0].intensity.forecast;
+
+      if (isArray(this.config.highCarbonLevels)) {
+        var index = this.config.highCarbonLevels.indexOf(data[0].intensity.index) != -1
+        this.service.setCharacteristic(Characteristic.CarbonDioxideDetected, index);
+      }
+
+      this.service.setCharacteristic(Characteristic.CarbonDioxidePeakLevel, forecast);
+      callback(null, actual);
     }
     else {
       this.log("Error getting state (status code %s): %s", response.statusCode, err);
@@ -47,36 +53,7 @@ LockitronAccessory.prototype.getState = function(callback) {
     }
   }.bind(this));
 }
-  
-LockitronAccessory.prototype.setState = function(state, callback) {
-  var lockitronState = (state == Characteristic.LockTargetState.SECURED) ? "lock" : "unlock";
 
-  this.log("Set state to %s", lockitronState);
-
-  request.put({
-    url: "https://api.lockitron.com/v2/locks/"+this.lockID,
-    qs: { access_token: this.accessToken, state: lockitronState }
-  }, function(err, response, body) {
-
-    if (!err && response.statusCode == 200) {
-      this.log("State change complete.");
-      
-      // we succeeded, so update the "current" state as well
-      var currentState = (state == Characteristic.LockTargetState.SECURED) ?
-        Characteristic.LockCurrentState.SECURED : Characteristic.LockCurrentState.UNSECURED;
-      
-      this.service
-        .setCharacteristic(Characteristic.LockCurrentState, currentState);
-      
-      callback(null); // success
-    }
-    else {
-      this.log("Error '%s' setting lock state. Response: %s", err, body);
-      callback(err || new Error("Error setting lock state."));
-    }
-  }.bind(this));
-}
-
-LockitronAccessory.prototype.getServices = function() {
+NGCarbonIntensity.prototype.getServices = function() {
   return [this.service];
 }
