@@ -35,7 +35,7 @@ NGCarbonIntensity.prototype.executeCo2 = function(callback) {
     if (!err && response.statusCode == 200) {
       var json = JSON.parse(body);
       var data = json.data;
-      this.log("National Grid Data: %s", JSON.stringify(data));
+      //this.log("National Grid Data: %s", JSON.stringify(data));
       var actual = data[0].intensity.actual;
       var forecast = data[0].intensity.forecast;
 
