@@ -1,6 +1,6 @@
 {
   "name": "homebridge-plugin-uk-nationalgrid-carbonintensity",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "UK National Grid Carbon Intensity plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
