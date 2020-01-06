@@ -1,6 +1,6 @@
 # UK National Grid Carbon Intensity Plugin
 
-Presents a Contact Sensor within HomeKit to reflect the current carbon dioxide output of the UK National Grid's current carbon output (https://carbonintensity.org.uk).
+Presents a Switch within HomeKit to reflect the current carbon dioxide output of the UK National Grid's current carbon output (https://carbonintensity.org.uk).
 
 ## Example config.json
 
