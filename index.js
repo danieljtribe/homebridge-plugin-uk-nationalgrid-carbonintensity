@@ -65,7 +65,7 @@ NGCarbonIntensityAccessory.prototype.startPing = function() {
         }
       }
     }.bind(this));
-  }, 60000);
+  }, 1800000); // 30 minute refresh
 }
 
 NGCarbonIntensityAccessory.prototype.getServices = function() {
