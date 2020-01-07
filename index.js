@@ -21,7 +21,7 @@ function NGCarbonIntensityAccessory(log, config) {
     .getCharacteristic(Characteristic.On)
     .on('get', this.getCurrentCo2IntensitySwitchState.bind(this));
 
-    this.startPing();
+    this.startPing(this.highCo2IntensitySwitch);
 }
 
 NGCarbonIntensityAccessory.prototype.getCurrentCo2IntensitySwitchState = function(callback) {
@@ -38,14 +38,14 @@ NGCarbonIntensityAccessory.prototype.getCurrentCo2IntensitySwitchState = functio
       
       if (isArray(this.highCarbonLevels)) {
         var index = this.highCarbonLevels.indexOf(intensity) != -1
-        this.log(index);
+        this.log("Current UK CO2 Intensity is", intensity);
         callback(null, index);
       }
     }
   }.bind(this));
 }
 
-NGCarbonIntensityAccessory.prototype.startPing = function() {
+NGCarbonIntensityAccessory.prototype.startPing = function(device) {
   setInterval(() => {
     request.get({
       url: "https://api.carbonintensity.org.uk/intensity",
@@ -60,8 +60,8 @@ NGCarbonIntensityAccessory.prototype.startPing = function() {
         
         if (isArray(this.highCarbonLevels)) {
           var index = this.highCarbonLevels.indexOf(intensity) != -1
-          this.log(index);
-          this.highCo2IntensitySwitch.setCharacteristic(Characteristic.On, index);
+          this.log("Current UK CO2 Intensity is", intensity);
+          device.setCharacteristic(Characteristic.On, index);
         }
       }
     }.bind(this));
